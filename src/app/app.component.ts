@@ -32,7 +32,7 @@ export class AppComponent {
     this.scene.background = new THREE.Color( 0x2669b9 );
 
     const fog = new THREE.Fog('#2669b9', 1, 300)
-    this.scene.fog = fog;
+    // this.scene.fog = fog;
 
     // Texture Loader
     const textureLoader = new THREE.TextureLoader()
@@ -99,7 +99,7 @@ export class AppComponent {
     renderer.outputEncoding = THREE.sRGBEncoding
 
     //Camera Initialisation
-    this.camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 0.1, 1000)
+    this.camera = new THREE.PerspectiveCamera(15, sizes.width / sizes.height, 0.1, 1000)
     this.camera.position.set(0, 40, 110)
     this.scene.add(this.camera)
 
