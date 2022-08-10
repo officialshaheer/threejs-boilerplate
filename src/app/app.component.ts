@@ -29,9 +29,9 @@ export class AppComponent {
     this.scene = new THREE.Scene();
     const cubeTextureLoader = new THREE.CubeTextureLoader()
     
-    this.scene.background = new THREE.Color( 0x55a67a );
+    this.scene.background = new THREE.Color( 0x2669b9 );
 
-    const fog = new THREE.Fog('#55a67a', 1, 300)
+    const fog = new THREE.Fog('#2669b9', 1, 300)
     this.scene.fog = fog;
 
     // Texture Loader
@@ -50,7 +50,7 @@ export class AppComponent {
     const gltfLoader = new GLTFLoader()
     gltfLoader.setDRACOLoader(dracoLoader)
 
-    const swingTexture = textureLoader.load('assets/model/swingBake.jpg')
+    const swingTexture = textureLoader.load('assets/model/bakedBallsDay2.jpg')
     swingTexture.flipY = false
     swingTexture.encoding = THREE.sRGBEncoding
 
@@ -58,7 +58,7 @@ export class AppComponent {
 
     let mixer: any = null;
     gltfLoader.load(
-      'assets/model/SwingF2.glb',
+      'assets/model/BallRunnerV3.glb',
       (gltf) => {
 
         gltf.scene.traverse((o)=>{
@@ -69,12 +69,16 @@ export class AppComponent {
         })
 
         mixer = new THREE.AnimationMixer(gltf.scene);
-        const action = mixer.clipAction(gltf.animations[2]);
-        action.play();
-        setInterval(()=>{
-          this.playSwingSound();
-        },2000)
-        gltf.scene.scale.set(10,10,10)
+        const action1 = mixer.clipAction(gltf.animations[0]);
+        const action2 = mixer.clipAction(gltf.animations[1]);
+        const action3 = mixer.clipAction(gltf.animations[2]);
+        action1.play();
+        action2.play();
+        action3.play();
+        // setInterval(()=>{
+        //   this.playSwingSound();
+        // },2000)
+        gltf.scene.scale.set(100,100,100)
         this.scene.add(gltf.scene)
       }
     )
@@ -102,7 +106,7 @@ export class AppComponent {
     // Controls
     this.controls = new OrbitControls(this.camera, canvas)
     this.controls.enableDamping = true;
-    this.controls.autoRotate = true;
+    // this.controls.autoRotate = true;
 
     //Resize Event
     window.addEventListener('resize', () => {
