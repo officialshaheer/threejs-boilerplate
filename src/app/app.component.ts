@@ -29,7 +29,7 @@ export class AppComponent {
     this.scene = new THREE.Scene();
     const cubeTextureLoader = new THREE.CubeTextureLoader()
     
-    this.scene.background = new THREE.Color( 0x2669b9 );
+    this.scene.background = new THREE.Color( 0x3fd84c );
 
     const fog = new THREE.Fog('#2669b9', 1, 300)
     // this.scene.fog = fog;
@@ -38,9 +38,18 @@ export class AppComponent {
     const textureLoader = new THREE.TextureLoader()
 
     // Threejs Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1)
+    const pointLight = new THREE.PointLight( 0x000000, 1.2);
+    this.scene.add(pointLight)
+    pointLight.position.set(0, 25, 0);
+    pointLight.castShadow = true
+
+    // const pointLightHelper = new THREE.PointLightHelper( pointLight, 1 );
+    // this.scene.add( pointLightHelper );
+
+    const ambientLight = new THREE.AmbientLight( 0xffffff, 1 );
     this.scene.add(ambientLight)
-    ambientLight.position.set(0, 5, 0);
+    ambientLight.position.set(0, 15, 0);
+    ambientLight.castShadow = true
 
     // Loaders and decoders
 
@@ -50,38 +59,102 @@ export class AppComponent {
     const gltfLoader = new GLTFLoader()
     gltfLoader.setDRACOLoader(dracoLoader)
 
-    const swingTexture = textureLoader.load('assets/model/bakedBallsDay2.jpg')
+    const swingTexture = textureLoader.load('assets/model/flag/bakeFlagV2.jpg')
     swingTexture.flipY = false
     swingTexture.encoding = THREE.sRGBEncoding
 
     const swingMaterial = new THREE.MeshBasicMaterial({ map: swingTexture, side: THREE.DoubleSide, wireframe: false })
 
+    THREE.ShaderLib[ 'lambert' ].fragmentShader = THREE.ShaderLib[ 'lambert' ].fragmentShader.replace(
+
+      `vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;`,
+  
+      `#ifndef CUSTOM
+          vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;
+      #else
+          vec3 outgoingLight = diffuseColor.rgb * ( 1.0 - 0.3 * ( 1.0 - getShadowMask() ) ); // shadow intensity hardwired to 0.3 here
+      #endif`
+  
+    );
+
+    var material = new THREE.MeshLambertMaterial( { map: swingTexture, side: THREE.DoubleSide } );
+    material.defines = material.defines || {};
+    material.defines.CUSTOM = "";
+
     let mixer: any = null;
     gltfLoader.load(
-      'assets/model/BallRunnerV3.glb',
+      'assets/model/flag/FlagV3.glb',
+      (gltf) => {
+
+        gltf.scene.traverse((o)=>{
+          if(o instanceof THREE.Mesh) { 
+            o.material = material;
+
+            //Flag Project
+            if(o.name === 'Cube' || 'Cube001') {
+              o.receiveShadow = true;
+              // o.castShadow = true;
+            } else if('Cylinder') {
+              o.castShadow = true;
+            } else if('Plane') {
+              o.castShadow = true;
+            }
+
+            // Loop Project
+            console.log(o.name);
+            // if(o.name === 'floor' || o.name === 'slider') {
+            //   o.material = material;
+            //   o.receiveShadow = true;
+            //   o.castShadow = true;
+            // } else if (o.name === 'Sphere') {
+            //   o.material = material;
+            //   // o.receiveShadow = true;
+            //   o.castShadow = true;
+            // }
+            // else {
+            //   o.material = swingMaterial;
+            //   o.receiveShadow = true;
+            // }
+          }
+          
+        })
+        console.log(gltf.animations);
+        
+        mixer = new THREE.AnimationMixer(gltf.scene);
+        const action1 = mixer.clipAction(gltf.animations[0]);
+        // const action2 = mixer.clipAction(gltf.animations[1]);
+        // const action3 = mixer.clipAction(gltf.animations[2]);
+        action1.play();
+        // action2.play();
+        // action3.play();
+        this.scene.add(gltf.scene)
+        gltf.scene.scale.set(5,5,5)
+      }
+    )
+
+    let mixer2: any = null;
+    gltfLoader.load(
+      'assets/model/avatar/Shaheer.glb',
       (gltf) => {
 
         gltf.scene.traverse((o)=>{
           if(o instanceof THREE.Mesh) {
-            o.material = swingMaterial;
+            // o.receiveShadow = true;
+            o.castShadow = true;
           }
-          
         })
 
-        mixer = new THREE.AnimationMixer(gltf.scene);
-        const action1 = mixer.clipAction(gltf.animations[0]);
-        const action2 = mixer.clipAction(gltf.animations[1]);
-        const action3 = mixer.clipAction(gltf.animations[2]);
-        action1.play();
-        action2.play();
-        action3.play();
-        // setInterval(()=>{
-        //   this.playSwingSound();
-        // },2000)
-        gltf.scene.scale.set(100,100,100)
+        mixer2 = new THREE.AnimationMixer(gltf.scene)
+        const action = mixer2.clipAction(gltf.animations[0])
+        action.play();
+
+        gltf.scene.scale.set(5,5,5)
         this.scene.add(gltf.scene)
-      }
-    )
+        gltf.scene.position.y = gltf.scene.position.y + .25
+        gltf.scene.position.x = -7
+        gltf.scene.rotateY(Math.PI / 2)
+        gltf.scene.castShadow = true;
+      });
   
     //Renderer Size
     const sizes = {
@@ -138,6 +211,9 @@ export class AppComponent {
       // Update mixer
       if(mixer !== null) {
         mixer.update(deltaTime)
+      }
+      if(mixer2 !== null) {
+        mixer2.update(deltaTime)
       }
 
       this.controls.update()
