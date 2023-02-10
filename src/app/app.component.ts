@@ -3,9 +3,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import * as dat from 'dat.gui'
-
-import BouncingLogoComponent from "./bouncing-logo/bouncing-logo.component"
 
 @Component({
   selector: 'app-root',
@@ -13,46 +10,46 @@ import BouncingLogoComponent from "./bouncing-logo/bouncing-logo.component"
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'shaheer-shahabudeen';
+  title = 'animations';
   camera: any;
   scene: any;
   controls: any;
-
-
+  swingAudio: any;
   constructor() {
-      
+
   }
 
   ngOnInit() {
     //Canvas
     const canvas = document.querySelector('.webgl') as HTMLCanvasElement;
-    
+
+    this.swingAudio = new Audio('assets/sounds/swing.mp3')
+
+    //Scene Initialisation  
+    this.scene = new THREE.Scene();
     const cubeTextureLoader = new THREE.CubeTextureLoader()
     
-    //Scene Initialisation  
-    this.scene = new BouncingLogoComponent();
-    this.scene.initialize();
-    
-    this.scene.background = new THREE.Color( 0xBDCEDB );
+    this.scene.background = new THREE.Color( 0x3fd84c );
 
-    const fog = new THREE.Fog('#BDCEDB', 1, 300)
+    const fog = new THREE.Fog('#2669b9', 1, 300)
     // this.scene.fog = fog;
 
     // Texture Loader
     const textureLoader = new THREE.TextureLoader()
 
+    // Threejs Lights
+    const pointLight = new THREE.PointLight( 0x000000, 1.2);
+    this.scene.add(pointLight)
+    pointLight.position.set(0, 25, 0);
+    pointLight.castShadow = true
+
+    // const pointLightHelper = new THREE.PointLightHelper( pointLight, 1 );
+    // this.scene.add( pointLightHelper );
+
     const ambientLight = new THREE.AmbientLight( 0xffffff, 1 );
     this.scene.add(ambientLight)
     ambientLight.position.set(0, 15, 0);
-
-    //Create a DirectionalLight and turn on shadows for the light
-    const light = new THREE.DirectionalLight( 0xffffff, .2 );
-    light.position.set( 10, 15, 10 ); //default; light shining from top
-    light.castShadow = true; // default false
-    this.scene.add( light );
-
-    // Debug
-    const gui = new dat.GUI();
+    ambientLight.castShadow = true
 
     // Loaders and decoders
 
@@ -61,7 +58,6 @@ export class AppComponent {
 
     const gltfLoader = new GLTFLoader()
     gltfLoader.setDRACOLoader(dracoLoader)
-
 
     const swingTexture = textureLoader.load('assets/model/flag/bakeFlagV2.jpg')
     swingTexture.flipY = false
@@ -87,21 +83,79 @@ export class AppComponent {
 
     let mixer: any = null;
     gltfLoader.load(
-      'assets/model/PortfolioV2.glb',
+      'assets/model/flag/FlagV3.glb',
       (gltf) => {
+
+        gltf.scene.traverse((o)=>{
+          if(o instanceof THREE.Mesh) { 
+            o.material = material;
+
+            //Flag Project
+            if(o.name === 'Cube' || 'Cube001') {
+              o.receiveShadow = true;
+              // o.castShadow = true;
+            } else if('Cylinder') {
+              o.castShadow = true;
+            } else if('Plane') {
+              o.castShadow = true;
+            }
+
+            // Loop Project
+            console.log(o.name);
+            // if(o.name === 'floor' || o.name === 'slider') {
+            //   o.material = material;
+            //   o.receiveShadow = true;
+            //   o.castShadow = true;
+            // } else if (o.name === 'Sphere') {
+            //   o.material = material;
+            //   // o.receiveShadow = true;
+            //   o.castShadow = true;
+            // }
+            // else {
+            //   o.material = swingMaterial;
+            //   o.receiveShadow = true;
+            // }
+          }
+          
+        })
+        console.log(gltf.animations);
+        
+        mixer = new THREE.AnimationMixer(gltf.scene);
+        const action1 = mixer.clipAction(gltf.animations[0]);
+        // const action2 = mixer.clipAction(gltf.animations[1]);
+        // const action3 = mixer.clipAction(gltf.animations[2]);
+        action1.play();
+        // action2.play();
+        // action3.play();
         this.scene.add(gltf.scene)
+        gltf.scene.scale.set(5,5,5)
       }
     )
 
-    //TV Screen
-    const geometry = new THREE.PlaneGeometry( 50, 50, 10, 10 );
-    const material2 = new THREE.MeshStandardMaterial( {color: 0x04374b, side: THREE.DoubleSide} );
-    const plane = new THREE.Mesh( geometry, material2 );
-    // plane.rotation.x = Math.PI / 2
-    plane.rotation.x = 0
-    plane.receiveShadow = true;
-    // this.scene.add( plane );
+    let mixer2: any = null;
+    gltfLoader.load(
+      'assets/model/avatar/Shaheer.glb',
+      (gltf) => {
 
+        gltf.scene.traverse((o)=>{
+          if(o instanceof THREE.Mesh) {
+            // o.receiveShadow = true;
+            o.castShadow = true;
+          }
+        })
+
+        mixer2 = new THREE.AnimationMixer(gltf.scene)
+        const action = mixer2.clipAction(gltf.animations[0])
+        action.play();
+
+        gltf.scene.scale.set(5,5,5)
+        this.scene.add(gltf.scene)
+        gltf.scene.position.y = gltf.scene.position.y + .25
+        gltf.scene.position.x = -7
+        gltf.scene.rotateY(Math.PI / 2)
+        gltf.scene.castShadow = true;
+      });
+  
     //Renderer Size
     const sizes = {
       width: innerWidth,
@@ -118,15 +172,10 @@ export class AppComponent {
     renderer.outputEncoding = THREE.sRGBEncoding
 
     //Camera Initialisation
-    // this.camera = new THREE.PerspectiveCamera(15, sizes.width / sizes.height, 0.1, 1000)
-    this.camera = new THREE.PerspectiveCamera(20, sizes.width / sizes.height, 0.1, 150)
-    this.camera.rotation.reorder('YXZ')
-    this.camera.position.set(0, 10, 10)
+    this.camera = new THREE.PerspectiveCamera(15, sizes.width / sizes.height, 0.1, 1000)
+    this.camera.position.set(0, 40, 110)
     this.scene.add(this.camera)
 
-    // this.setModel();
-    // this.setAnimation();
-    
     // Controls
     this.controls = new OrbitControls(this.camera, canvas)
     this.controls.enableDamping = true;
@@ -147,10 +196,6 @@ export class AppComponent {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     })
 
-    // document.getElementById("pos")?.addEventListener("input", (e:any)=> {
-    //   model.mesh.position.x = e.target.value;
-    // })
-
     // Clock
     let clock = new THREE.Clock()
     let oldELapsedTime = 0
@@ -163,11 +208,12 @@ export class AppComponent {
       const deltaTime = elapsedTime - oldELapsedTime
       oldELapsedTime = elapsedTime
 
-      this.scene.update();
-
       // Update mixer
       if(mixer !== null) {
         mixer.update(deltaTime)
+      }
+      if(mixer2 !== null) {
+        mixer2.update(deltaTime)
       }
 
       this.controls.update()
@@ -177,4 +223,9 @@ export class AppComponent {
     tick()
   }
 
+  playSwingSound() {
+    this.swingAudio.currentTime = 0;
+    this.swingAudio.volume = 0.5;
+    this.swingAudio.play();
+  }
 }
