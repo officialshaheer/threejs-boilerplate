@@ -75,14 +75,7 @@ export default class BouncingLogoComponent extends THREE.Scene {
 
     this.start = Date.now()
     this.current = this.start
-
-    document.getElementById("pos")?.addEventListener("input", (e:any)=> {
-      this.model.mesh.position.x = e.target.value;
-    })
-    
   }
-
-  
 
   update() {
     const current = Date.now()

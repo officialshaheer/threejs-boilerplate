@@ -147,6 +147,10 @@ export class AppComponent {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     })
 
+    // document.getElementById("pos")?.addEventListener("input", (e:any)=> {
+    //   model.mesh.position.x = e.target.value;
+    // })
+
     // Clock
     let clock = new THREE.Clock()
     let oldELapsedTime = 0
